@@ -8,6 +8,68 @@ st.set_page_config(
     layout="wide")
 
 st.title("🥬 FR Unclaimed data Mapper and Abstract Generator")
+# ==================================================
+# NAVIGATION TO OTHER APPS
+# ==================================================
+
+# ==================================================
+# NAVIGATION TO RELATED APPS
+# ==================================================
+
+st.markdown("## 🔗 Related Tools")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown(
+        """
+        <div style="margin-bottom:8px; font-size:14px; color:gray;">
+            This tool helps in deduplicating records and mapping Aadhaar details efficiently.
+        </div>
+        <a href="https://fragri.streamlit.app" target="_blank">
+            <button style="
+                width:100%;
+                padding:15px;
+                font-size:16px;
+                font-weight:700;
+                background-color:#2E8B57;
+                color:white;
+                border:none;
+                border-radius:8px;
+                cursor:pointer;">
+                🌾 Open FR Agri Aadhaar Mapper
+            </button>
+        </a>
+        """,
+        unsafe_allow_html=True
+    )
+
+with col2:
+    st.markdown(
+        """
+        <div style="margin-bottom:8px; font-size:14px; color:gray;">
+            This tool helps in cleaning and deduplicating FR data for structured formatting.
+        </div>
+        <a href="https://agrifrformatter.streamlit.app" target="_blank">
+            <button style="
+                width:100%;
+                padding:15px;
+                font-size:16px;
+                font-weight:700;
+                background-color:#1E90FF;
+                color:white;
+                border:none;
+                border-radius:8px;
+                cursor:pointer;">
+                📄 Open FR Data Formatter
+            </button>
+        </a>
+        """,
+        unsafe_allow_html=True
+    )
+
+
+st.markdown("---")
 
 st.info(
     """
@@ -190,4 +252,4 @@ st.markdown(
     </div>
     """,
     unsafe_allow_html=True
-)
+)# new branch file update
