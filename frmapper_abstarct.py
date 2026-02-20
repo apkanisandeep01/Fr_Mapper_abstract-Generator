@@ -126,10 +126,7 @@ if fr_files and bh_files:
             safe_read_excel(
                 f,
                 required_columns=["VillName","PPBNO","FarmerName_Tel","FatherName_Tel","AadharId",
-                    "MobileNo","EnrollmenStatus"]
-            )
-            for f in bh_files
-        ], ignore_index=True)
+                    "MobileNo","EnrollmenStatus"])for f in bh_files], ignore_index=True)
 
         # ---------------- MERGE ----------------
         left_on = ["Village Name", "Farmer Name", "Identifier Name"]
@@ -156,11 +153,11 @@ if fr_files and bh_files:
         st.metric("📊 Duplicate Records Found", duplicate_count)
 
         # ---------------- NULL SPLIT ----------------
-        null_df = merged[merged["AadharId"].isna()].copy()
-        non_null_df = merged[merged["AadharId"].notna()].copy()
+        # null_df = merged[merged["AadharId"].isna()].copy()
+        # non_null_df = merged[merged["AadharId"].notna()].copy()
 
         # ---------------- GROUP MAIN DATA ----------------
-        grouped = non_null_df.groupby(
+        grouped = merged.groupby(
             ["Bucket ID", "Village LGD Code"]
         ).agg({
             "Village Name": lambda x: ", ".join(pd.unique(x.astype(str))),
@@ -174,15 +171,17 @@ if fr_files and bh_files:
             "Sub Survey Number": lambda x: ", ".join(pd.unique(x.astype(str))),
             "EnrollmenStatus": "last"
         }).reset_index()
+        
+        # null_df = null_df.reindex(columns=grouped.columns)
 
-        null_df = null_df.reindex(columns=grouped.columns)
-
-        processed_df = pd.concat([grouped, null_df], axis=0, ignore_index=True)
+        # processed_df = pd.concat([grouped, null_df], axis=0, ignore_index=True)
+        null_df = grouped[grouped["AadharId"].isna()].copy()
+        non_null_df = grouped[grouped["AadharId"].notna()].copy()
 
         # ==================================================
         # AADHAAR GROUPING LOGIC
         # ==================================================
-        aadhar_group = processed_df[processed_df["AadharId"].notna()].groupby("AadharId").agg(
+        aadhar_group = non_null_df.groupby(["AadharId"]).agg(
             aggregated_ppbno=("PPBNO", lambda x: ", ".join(pd.unique(x.astype(str)))),
             vill_count=("Village Name", "count"),
             vill_bucket=("Village Name", lambda x: ", ".join(pd.unique(x.astype(str))))
@@ -208,7 +207,7 @@ if fr_files and bh_files:
         # --------------------------------------------------
         # MERGE BACK
         # --------------------------------------------------
-        processed_df = processed_df.merge(
+        processed_df = grouped.merge(
             aadhar_group.drop(columns=["vill_category"]),
             on="AadharId",
             how="left"
