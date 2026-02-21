@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import zipfile
 import io
 
 st.set_page_config(
@@ -10,10 +11,6 @@ st.set_page_config(
 st.title("🥬 FR Unclaimed data Mapper and Abstract Generator")
 # ==================================================
 # NAVIGATION TO OTHER APPS
-# ==================================================
-
-# ==================================================
-# NAVIGATION TO RELATED APPS
 # ==================================================
 
 st.markdown("## 🔗 Related Tools")
@@ -172,7 +169,6 @@ if fr_files and bh_files:
             "EnrollmenStatus": "last"
         }).reset_index()
         
-        # null_df = null_df.reindex(columns=grouped.columns)
 
         # processed_df = pd.concat([grouped, null_df], axis=0, ignore_index=True)
         null_df = grouped[grouped["AadharId"].isna()].copy()
@@ -219,21 +215,82 @@ if fr_files and bh_files:
         processed_df['Identifier Name']= processed_df['Identifier Name'].str.upper()
         processed_df['vill_bucket']= processed_df['vill_bucket'].str.upper()
 
-        st.success("✅ Files processed successfully")
+        st.markdown(
+            """
+            <div style="
+                text-align:center;
+                font-size:40px;
+                font-weight:900;
+                color:#2E8B57;
+                padding:8px 0;">
+                ✅ Processed file Preview
+            </div>
+            """,
+            unsafe_allow_html=True)
+
         st.dataframe(processed_df.head(10), use_container_width=True)
 
-        # ---------------- DOWNLOAD ----------------
-        buffer = io.BytesIO()
-        with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
-            processed_df.to_excel(writer, index=False, sheet_name="Farmer_Report")
+        # st.markdown("### Download Options")
+        st.markdown(
+        """
+        <div style="
+            text-align:center;
+            font-size:40px;
+            font-weight:900;
+            color:#2E8B57;
+            padding:8px 0;">
+            ⬇ Download Options
+        </div>
+        """,
+        unsafe_allow_html=True)
 
-        st.download_button(
-            "⬇️ Download Merged File",
-            data=buffer.getvalue(),
-            file_name="FR_Merged_Report.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True
-        )
+
+
+        col1, col2 = st.columns(2)
+        with col1:
+            # ---------------- DOWNLOAD ----------------
+            buffer = io.BytesIO()
+            with pd.ExcelWriter(buffer, engine="xlsxwriter") as writer:
+                processed_df.to_excel(writer, index=False, sheet_name="Farmer_Report")
+
+            st.download_button(
+                "⬇️ Download Processed File",
+                data=buffer.getvalue(),
+                file_name="FR_Merged_Report.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                use_container_width=True
+            )
+        with col2:
+            # ==================================================
+            # SPLIT BY VILLAGE AND CREATE ZIP
+            # ==================================================
+
+            zip_buffer = io.BytesIO()
+
+            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+
+                for village, group in processed_df.groupby("Village Name"):
+
+                    # Clean filename
+                    safe_village = str(village).replace("/", "_").replace("\\", "_").strip()
+
+                    excel_buffer = io.BytesIO()
+
+                    with pd.ExcelWriter(excel_buffer, engine="xlsxwriter") as writer:
+                        group.to_excel(writer, index=False, sheet_name="Village_Data")
+
+                    zip_file.writestr(
+                        f"{safe_village}.xlsx",
+                        excel_buffer.getvalue()
+                    )
+
+            st.download_button(
+                label="⬇ Download Village-wise ZIP File",
+                data=zip_buffer.getvalue(),
+                file_name="Village_Split_Files.zip",
+                mime="application/zip",
+                use_container_width=True
+            )
 
     except Exception:
         st.error("⚠️ Error processing files. Please check format and upload raw files only.")
@@ -241,14 +298,26 @@ if fr_files and bh_files:
 st.markdown("---")
 st.markdown(
     """
-    <div style="text-align:center; color:gray; font-size:14px;">
-        Developed and maintained by <b>Sandeep Kumar</b><br>
+    <div style="
+        text-align:center;
+        font-size:24px;
+        font-weight:600;
+        color:#070808;
+        background-color:#c8f283;
+        padding:20px;
+        border-radius:8px;
+        margin-top:20px;
+    ">
+        Made with ❤️ by <b style="font-size:24px;">SANDEEP KUMAR APKANI</b><br>
         <a href="https://apkanisandeep01.github.io/my-portfolio/"
            target="_blank"
-           style="color:#4a90e2; text-decoration:none;">
-            Visit my portfolio
+           style="
+               color:#070808;
+               font-weight:800;
+               text-decoration:none;
+               font-size:20px;">
+             Visit My Portfolio
         </a>
     </div>
     """,
-    unsafe_allow_html=True
-)# new branch file update
+    unsafe_allow_html=True)
